@@ -39,25 +39,24 @@
      2 bit constant RF:IRQ2_RECVD
      1 bit constant RF:IRQ2_CRCOK
 
-   0 variable rf.mode
-   0 variable rf.last
-   0 variable rf.rssi
-   0 variable rf.lna
-   0 variable rf.afc
-  66 buffer:  rf.buf
+   0 variable rf.mode \ last set chip mode
+   0 variable rf.last \ flag used to fetch RSSI only once per packet
+   0 variable rf.rssi \ RSSI signal strength of last reception
+   0 variable rf.lna  \ Low Noise Amplifier setting (set by AGC)
+   0 variable rf.afc  \ Auto Frequency Control offset
+  66 buffer:  rf.buf  \ buffer with last received packet data
 
-8683 variable rf.freq
-  42 variable rf.group
-  61 variable rf.nodeid
+8683 variable rf.freq   \ frequency (auto-scaled to 100..999 MHz)
+  42 variable rf.group  \ network group (1..250)
+  61 variable rf.nodeid \ node ID of this node (1..63)
 
 create rf:init  \ initialise the radio, each 16-bit word is <reg#,val>
 hex
   0200 h, \ packet mode, fsk
   0302 h, 048A h, \ 49230bps
-  \ 0502 h, 06E1 h, \ 45kHzFdev -> modulation index = 1.8
-  0503 h, 064E h, \ 51kHzFdev -> modulation index = 2.1
-  \ 0503 h, 0677 h, \ 56kHzFdev -> modulation index = 2.2
-  \ 0505 h, 0640 h, \ 90kHzFdev -> modulation index = 4
+  \ 0502 h, 06E1 h, \ 44kHzFdev -> modulation index = 1.8
+  0503 h, 064E h, \ 51.5kHzFdev -> modulation index = 2.1
+  \ 0505 h, 06C3 h, \ 90kHzFdev -> modulation index = 3.6
   0B00 h, \ AFC low beta off
   1952 h, 1A4A h, \ RxBw 83khz, AFCBw 100khz
   \ 194A h, 1A42 h, \ RxBw 100khz, AFCBw 125khz
@@ -139,7 +138,7 @@ decimal align
     RF:M_FS rf!mode
   then ;
 
-\ rf-status fetches the IRQ1 reg, checks whether rx_ready is set and was not set
+\ rf-status fetches the IRQ1 reg, checks whether rx_sync is set and was not set
 \ in rf.last. If so, it saves rssi, lna, and afc values; and then updates rf.last.
 \ rf.last ensures that the info is grabbed only once per packet.
 : rf-status ( -- )  \ update status values on sync match
