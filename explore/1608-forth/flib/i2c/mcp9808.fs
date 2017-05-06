@@ -1,4 +1,4 @@
-\ read out the MCP9808 temperature sensor
+\ driver for a MCP9808 temperature sensor
 \ needs i2c
 
 \ fetch big-endian half-word
