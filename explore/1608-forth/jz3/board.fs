@@ -14,7 +14,8 @@ include ../flib/stm32l0/hal.fs
 include ../flib/stm32l0/adc.fs
 include ../flib/stm32l0/timer.fs
 include ../flib/stm32l0/pwm.fs
-include ../flib/stm32l0/i2c.fs
+\ include ../flib/stm32l0/i2c.fs
+include ../flib/any/i2c-bb.fs
 include ../flib/stm32l0/sleep.fs
 
 PA15 variable ssel  \ can be changed at run time
@@ -25,13 +26,10 @@ include ../flib/stm32l0/spi.fs
 
 PB5 constant LED
 
-PB4 constant DIO2
-
-
 : led-on LED ioc! ;
 : led-off LED ios! ;
 
-: hello ( -- ) flash-kb . ." KB <jz3> " hwid hex.
+: hello ( -- ) flash-kb . ." KB <jnz> " hwid hex.
   $10000 compiletoflash here -  flashvar-here compiletoram here -
   ." ram/flash: " . . ." free " ;
 
