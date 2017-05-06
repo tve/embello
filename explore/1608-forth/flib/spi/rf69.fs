@@ -39,16 +39,16 @@
      2 bit constant RF:IRQ2_RECVD
      1 bit constant RF:IRQ2_CRCOK
 
-   0 variable rf.mode \ last set chip mode
-   0 variable rf.last \ flag used to fetch RSSI only once per packet
-   0 variable rf.rssi \ RSSI signal strength of last reception
-   0 variable rf.lna  \ Low Noise Amplifier setting (set by AGC)
-   0 variable rf.afc  \ Auto Frequency Control offset
-  66 buffer:  rf.buf  \ buffer with last received packet data
+   0 variable rf.mode  \ last set chip mode
+   0 variable rf.last  \ flag used to fetch RSSI only once per packet
+   0 variable rf.rssi  \ RSSI signal strength of last reception
+   0 variable rf.lna   \ Low Noise Amplifier setting (set by AGC)
+   0 variable rf.afc   \ Auto Frequency Control offset
+  66 buffer:  rf.buf   \ buffer with last received packet data
 
-8683 variable rf.freq   \ frequency (auto-scaled to 100..999 MHz)
-  42 variable rf.group  \ network group (1..250)
-  61 variable rf.nodeid \ node ID of this node (1..63)
+8683 variable rf.freq    \ frequency (auto-scaled to 100..999 MHz)
+  42 variable rf.group   \ network group (1..250)
+  61 variable rf.nodeid  \ node ID of this node (1..63)
 
 create rf:init  \ initialise the radio, each 16-bit word is <reg#,val>
 hex
