@@ -20,7 +20,7 @@
   else 0
   then ;
 
-: bno-init ( -- nak ) \ reset and initialize the chip, takes 700ms!
+: bno-init ( -- nak ) \ reset and initialize the chip, takes ~600ms!
   i2c-init bno-reset ?dup if exit then
   $86 $3b reg! \ android orientation, radians for euler & gyroscope
   $00 $3e reg! \ normal power mode
@@ -39,21 +39,43 @@
 
 14 buffer: bno.data \ data in halfwords: quaternion w, x, y, z; linear accel x, y, z
 
-: bno-data ( -- f ) \ write data to bno.data, return calibration flag
+: bno-data ( -- f ) \ write data to bno.data, return calibration flag (0=uncal, 1=ok, 2=perfect)
   $20 reg 14 i2c-xfer drop  \ transfer quaternion and accel data
   bno.data 14 0 do          \ save into our buffer
     i2c> over i + c!
   loop drop
-  $c0 $35 reg@ over and =   \ get system calibration flag
+  $35 reg@ $c0 2dup and = if \ fetch calibration, $c0 is system cal
+    $ff = if 2 else 1 then \ $ff is system and all sensors cal
+  else drop 0
+  then
+  ;
+
+: bno-calib@ ( -- count ) \ fetch calibration data into bno.data, returns number of bytes
+  $00 $3d reg! \ set operation mode to config
+  $55 reg 22 i2c-xfer drop
+  bno.data 22 0 do i2c> over i + c! loop drop
+  $0c $3d reg! \ set operation mode to ndof
+  ;
+
+: bno-calib! ( -- ) \ write calibration data from bno.data
+  $00 $3d reg! \ set operation mode to config
+  $55 reg
+  bno.data 22 0 do dup i + c@ >i2c loop drop
+  0 i2c-xfer drop
+  $0c $3d reg! \ set operation mode to ndof
   ;
 
 : bno. ( -- ) \ fetch and print current data
   bno-data
-  if ." calib q(" else ." uncal q(" then
+  case
+  0 of ." uncal q(" endof
+  1 of ." ~cal  q(" endof
+  2 of ." calib q(" endof
+  endcase
   bno.data
-  4 0 do dup h@ . 2+ loop \ print quaternions
+  4 0 do dup h@ 16 lshift 16 arshift . 2+ loop \ print quaternions
   ." ) a("
-  3 0 do dup h@ . 2+ loop \ print accel
+  3 0 do dup h@ 16 lshift 16 arshift . 2+ loop \ print accel
   drop
   [char] ) emit
   $34 reg@ .
@@ -70,4 +92,4 @@
   key? until
   ;
 
-test
+bno-test
