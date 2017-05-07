@@ -11,3 +11,9 @@ decimal
 
 : crc16 ( b crc -- crc )  \ update CRC16 with given byte
   over crc16h swap 4 rshift crc16h ;
+
+: crc16buf ( crc addr n -- crc ) \ update CRC16 with buffer
+  0 ?do ( crc addr )
+    dup i + c@ ( crc addr b )
+    rot crc16 swap
+  loop drop ;
