@@ -2,15 +2,32 @@
 
 [code]: any/mocking.fs (testing)
 * Code: <a href="https://github.com/jeelabs/embello/tree/master/explore/1608-forth/flib/any/mocking.fs">any/mocking.fs</a>
-* Needs: testing
+* Needs: `testing.fs`
 
 The mocking library enables simple mocking of dependencies and checking of expectations.
-In order to test a word that uses some dependency the typical approach is to override the
-dependency and implement it/them using the mocking library.
+In order to test a word that uses some dependency the idea is to override the
+dependency and implement it using the mocking library.
 
-This best illustrated by example where we are testing a word `too-hot` that uses the SPI library,
-and specifically the `spi2>` word. The tests mock the `spi2>` word's response and verify that it is
-called with the correct parameter.
+### API
+
+[defs]: <> (mocks m>)
+```
+: mocks ( v1 .. vN -- ) \ save values into mock buffer so they can be accessed in mocks
+: m> ( -- v ) \ pull next value from mockbuf
+```
+
+[defs]: <> (expect e? e=)
+```
+: expect ( v1 .. vN -- ) \ save values into expectations buffer so they can be checked
+: e? ( v -- ) \ verify that next expectation matches
+: e= ( -- ) \ verify that all expectations were consumed
+```
+
+### Example
+
+This example tests a word `too-hot` that uses the SPI library,
+and specifically the `spi2>` word. The tests mocks the `spi2>` word's response and verifies
+that it is called with the correct parameter.
 
 ```
 \ this example uses SPI and mocks the spi2> function
@@ -36,19 +53,5 @@ called with the correct parameter.
   too-hot true =always
   e=
 ```
-
-### API
-
-[defs]: <> (mocks m>)
-```
-: mocks ( v1 .. vN -- ) \ save values into mock buffer so they can be accessed in mocks
-: m> ( -- v ) \ pull next value from mockbuf
-```
-
-[defs]: <> (expect e? e=)
-```
-: expect ( v1 .. vN -- ) \ save values into expectations buffer so they can be checked
-: e? ( v -- ) \ verify that next expectation matches
-: e= ( -- ) \ verify that all expectations were consumed
-```
+A more complete example can be found in `smem-rec-test.fs`.
 

@@ -1,4 +1,4 @@
-# SMEM driver for SPI flash chips such as Winbon W25Q16, .. W25Q128
+# SPI flash chip driver for Winbond W25Q16 .. W25Q128
 
 [code]: spi/smem.fs (spi)
 * Code: <a href="https://github.com/jeelabs/embello/tree/master/explore/1608-forth/flib/spi/smem.fs">spi/smem.fs</a>
@@ -9,10 +9,10 @@ compatibles. It provides the basics to read, erase, write flash. No support is p
 locking or double/quad access modes.
 
 The W25 series of flash chips are organized into 4K sectors containing 256-byte pages. The smallest
-erasable unit is a sector and the smallest writable unit is a page, although in practice individual
-bytes can be written.
+erasable unit is a sector and the smallest writable unit is a byte, however, a single write is
+confined to a page (cannot cross page boundaries).
 
-The performance specs vary, but typically more than 100000 erase/program cycles are supported,
+The performance specs vary, but typically more than 100000 erase/program cycles are supported and
 the flash chip can be read at over 50Mbps. A sector erase takes 45-400ms and a page write takes
 0.7-3ms.
 
@@ -44,11 +44,11 @@ page in the sector to erase.
 ```
 
 To read/write flash memory the `smem>` and `>smem` words read and write a 256-byte page,
-respectively. `smem.1>` reads one byte. Note that the `smem` write operation busy-waits for
-the page flashing operation to complete (typ. 100ms).
+respectively. `smem.1>` reads one byte. Note that the `>smem` write operation busy-waits for
+the page flashing operation to complete (typ. 0.7ms).
 
 In order to write a page and not wait for completion use `>smem*`. This word does busy-wait
-before starting the write, so it is safe to call `>smem*` rapidly without explicitly
+_before_ starting the write, so it is safe to call `>smem*` rapidly without explicitly
 busy-waiting.
 
 [defs]: <> (smem> >smem smem.1> >smem*)
