@@ -71,30 +71,33 @@ $40013000 constant SPI1
   -spi
   ;
 
+: >spi.N ( addr len spi-sr -- spi-sr ) \ write len bytes to spi loop starts with spi-rxdrop
+  >r 0 ?do ( addr R:spi-sr lim ix )
+    dup c@ ( addr c )
+    2 rpick spi-rxdrop spi-push drop ( addr )
+    1+ ( addr+1 )
+  loop
+  drop r> spi-rxdrop ( spi1-sr )
+  ;
+
 : >spiN ( addr len reg -- ) \ write len bytes to reg
   +spi
   SPI1-SR spi-push ( addr len spi1-sr )
-  swap 0 ?do
-    over c@ ( addr spi1-sr c )
-    swap spi-rxdrop ( addr c spi1-sr )
-    spi-push ( addr spi1-sr )
-    swap 1+ swap ( addr+1 spi1-sr )
-  loop
-  nip spi-rxdrop drop -spi
+  >spi.N drop -spi
+  ;
+
+: spi.N> ( addr len spi-sr -- ) \ read len bytes from spi, loop starts with spi-push0
+  >r 0 ?do ( addr )
+    2 rpick spi-push0 spi-rxrdy ( addr )
+    spi1>dr @ ( addr c )
+    over c! 1+ ( addr )
+  loop drop rdrop
   ;
 
 : spiN> ( addr len reg -- ) \ read len bytes from reg
   +spi
   SPI1-SR spi-push spi-rxdrop ( addr len spi1-sr )
-  swap 0 ?do ( addr spi1-sr )
-    spi-push0
-    spi-rxrdy
-    dup spi1>dr @ ( addr spi1-sr c )
-    rot dup 1+ ( spi1-sr c addr addr+1 )
-    -rot c! ( spi1-sr addr+1 )
-    swap
-  loop
-  2drop -spi
+  spi.N> -spi
   ;
 
 \ ===== initialization
