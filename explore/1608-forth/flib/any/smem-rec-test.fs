@@ -9,6 +9,9 @@ include mocking.fs
   swap e? e? ;
 : >smem.n ( addr len flash-addr -- )
   rot e? swap e? e? ;
+: smem.n> ( addr len flash-addr -- )
+  rot e? swap e? e? ;
+
 : smem-size 16384 ;
 : smem-erase e? ;
 
@@ -71,7 +74,7 @@ $2ff0 next-addr ! 17 xs? -1 =always
   buf  95 rec  e=
   next-addr @ 4096 =always
 
-96 4096 buf 96 32 expect  4000 next-addr ! \ cross sector by one
+96 4096 buf 96 32 expect  4000 next-addr ! \ cross sector by one, erase next sect (page 32)
   buf  96 rec  e=
   next-addr @ 4193 =always
 
@@ -149,5 +152,17 @@ $ff 10 mocks  0 4096 expect \ first sect free, second has 10 byte msg
   pb-init -1 =always  e=
 
 \ ===== test pb
+
+$ff mocks  0 expect  0 next-addr ! \ empty flash
+  buf pb -1 =always  e=
+  next-addr @ 0 =always
+
+10 mocks  55 buf 10 56 expect  55 next-addr ! \ one 10-byte message at 55
+  buf pb  10 =always  e=
+  next-addr @ 66 =always
+
+$ff 10 mocks  4000 4096 buf 10 4097 expect  4000 next-addr ! \ at end of sect, 10 byte msg in next sect
+  buf pb  10 =always  e=
+  next-addr @ 4107 =always
 
 test-summary
