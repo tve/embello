@@ -73,11 +73,13 @@
 : pb ( addr -- len ) \ play back next buffer into addr and return its length, -1 if there is nothing
   \ read length byte where we are
   next-addr @ dup smem.1> ( addr flash-addr len ) \ read length byte
+  cr .v
   dup $ff = if
     \ no message here, if not at start of sector, see whether the next sector has something
     \ this happens because we don't write a partial message to the end of a sector
     swap ( addr len flash-addr )
-    $fff and 0= if 2drop drop -1 exit then \ already at start of sector, no data left, return -1
+    .v
+    dup $fff and 0= if 2drop drop -1 exit then \ already at start of sector, no data left, return -1
     next-sect
     dup next-addr ! \ save new flash address
     nip dup smem.1> ( addr flash-addr len ) \ read length byte
@@ -86,7 +88,7 @@
   \ do bookkeeping and get actual message
   dup >r \ save length
   swap 1+ 2dup + next-addr ! ( addr len flash-addr+1 ) \ bump next-addr
-  smem.n> r> \ read data and return length
+  ." >" .v smem.n> r> \ read data and return length
   ;
 
 \ ===== initialization
