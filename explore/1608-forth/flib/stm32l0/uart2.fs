@@ -23,8 +23,8 @@ $40004400 constant USART2
      ."     ISR " dup @ hex. 4 +
      ."  X  ICR " dup @ hex. drop ;
 
-: uart2-key? ( -- f ) 5 bit USART2-ISR bit@ ;
-: uart2-emit? ( -- f ) 7 bit USART2-ISR bit@ ;
+: uart2-key? ( -- f ) pause 5 bit USART2-ISR bit@ ;
+: uart2-emit? ( -- f ) pause 7 bit USART2-ISR bit@ ;
 \ if overrun detection is enabled: uart2-key? ( -- f ) 8 USART2-ICR bis! 5 bit USART2-ISR bit@ ;
 
 : uart2-key ( -- c ) begin uart2-key? until USART2-RDR @ ;

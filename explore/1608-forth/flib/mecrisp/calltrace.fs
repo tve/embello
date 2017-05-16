@@ -34,7 +34,7 @@
 
 : ct ( -- )
  cr
- rdepth 0 do
+ rdepth 40 min 0 do
    i hex. i 2+ rpick dup hex. traceinside. cr
  loop
 ;
@@ -43,7 +43,7 @@
  cr cr
  unhandled
  cr
- h.s
+ \ h.s
  cr
  ." Calltrace:" ct
  begin again \ Trap execution

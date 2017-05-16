@@ -19,6 +19,6 @@ $E000E100 constant NVIC-EN0R \ IRQ 0 to 31 Set Enable Register
 ;
 
 : uart2-key? ( -- f )  \ input check for interrupt-driven ring buffer
-  uart2-ring ring# 0<> ;
+  pause uart2-ring ring# 0<> ;
 : uart2-key ( -- c )  \ input read from interrupt-driven ring buffer
   begin uart2-key? until  uart2-ring ring> ;

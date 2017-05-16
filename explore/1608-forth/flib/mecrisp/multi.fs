@@ -2,7 +2,7 @@
 \ adapted from mecrisp-stellaris 2.2.1a (GPL3)
 
 \ configuration:
-64 cells constant stackspace \ 64 stack elements for every task (both stacks)
+64 cells constant stackspace \ stack elements for every task (both stacks)
 
 \ Internal stucture of task memory:
 \  0: Pointer to next task
@@ -12,8 +12,12 @@
 \  Parameter stack space
 \  Return    stack space
 
-false 0 true flashvar-here 4 cells - 4 nvariable boot-task \ Boot task is active, without handler and has no extra stackspace.
+\ Boot task is active, without handler and has no extra stackspace.
+false 0 true flashvar-here 4 cells - 4 nvariable boot-task
+
 boot-task boot-task ! \ For compilation into RAM only
+
+4 buffer: last-up
 
 boot-task variable up \ User Pointer
 : next-task  ( -- task )    up @ inline ;
@@ -25,13 +29,18 @@ boot-task variable up \ User Pointer
     [ $B430 h, ]        \ push { r4  r5 } to save I and I'
     rp@ sp@ save-task !  \ save return stack and stack pointer
     begin
-      next-task @ up !     \ switch to next running task
+      next-task @ dup up ! last-up !    \ switch to next running task
     task-state @ until
     save-task @ sp! rp!  \ restore pointers
     unloop ;              \ pop { r4  r5 } to restore the loop registers
 
 : wake ( task -- ) 1 cells +  true swap ! ; \ Wake a random task (IRQ safe)
 : idle ( task -- ) 1 cells + false swap ! ;  \ Idle a random task (IRQ safe)
+
+: depth ( -- n )
+  up @ boot-task = if  depth else up @ 4 cells stackspace    + + sp@ - 2 arshift then ;
+: rdepth ( -- n )
+  up @ boot-task = if rdepth else up @ 4 cells stackspace 2* + + rp@ - 2 arshift then ;
 
 \ -------------------------------------------------------
 \  Round-robin list task handling - do not use in IRQ !
@@ -83,11 +92,10 @@ boot-task variable up \ User Pointer
     dup stackspace + ( continue start-of-pstack start-of-rstack )
     tuck      ( continue start-of-rstack start-of-pstack start-of-rstack )
     2 cells - ( continue start-of-rstack start-of-pstack start-of-rstack* )
-\ Adjust for saved loop index and limit
+              \ Adjust for saved loop index and limit
     swap  !   ( continue start-of-rstack )
-\ Store the adjusted return stack pointer into the parameter stack
-    !
-\ Store the desired entry address at top of the tasks return stack
+              \ Store the adjusted return stack pointer into the parameter stack
+    !         \ Store the desired entry address at top of the tasks return stack
   r> insert ;
 
 : activate ( task --   R: continue -- )

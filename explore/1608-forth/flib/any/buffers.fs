@@ -12,4 +12,6 @@
   swap 2 pick 2 pick move ;
 
 : buffer. ( c-addr len -- ) \ print buffer like @<adr> <len> [ <c1> <c2> ... <cLen> ]
-  ." @" over . dup . ." [ " 255 and 0 ?do dup i + c@ . loop drop ." ]" ;
+  ." @" over hex. dup . ( c-addr len ) \ print address & len
+  ." [ $" over c@ h.2 space ( c-addr len ) \ print first byte in hex
+  $fff and 1 ?do dup i + c@ . loop drop ." ]" ; \ print remaining bytes in decimal

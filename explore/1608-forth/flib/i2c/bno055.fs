@@ -42,13 +42,11 @@ include ../stm32l0/eeprom.fs
   $39 reg@ .
   cr ;
 
-24 buffer: bno.data \ data in halfwords: quaternion w, x, y, z; linear accel x, y, z
+\ buffer for data (14 bytes) and as temp storage for calibration
+24 buffer: bno.data  \ data in halfwords: quaternion w, x, y, z; linear accel x, y, z
+14 constant bno#data \ data bytes in bno.data
 
-: bno-calib? ( -- f ) \ return calibration flag (0=uncal, 1=ok, 2=perfect)
-  $35 reg@ $c0 2dup and = if \ fetch calibration, $c0 is system cal
-    $ff = if 2 else 1 then \ $ff is system and all sensors cal
-  else drop 0
-  then ;
+: bno-calib? ( -- f ) $35 reg@ ; \ return calibration flag
 
 : bno-data ( -- ) \ write data to bno.data
   $20 reg 14 i2c-xfer drop  \ transfer quaternion and accel data
@@ -77,48 +75,43 @@ include ../stm32l0/eeprom.fs
 
 : bno-calib>ee ( off -- ) \ save calibration data to eeprom in 24 bytes at offset
   bno-calib@ drop
-  bno.data 22 crc16-buf ( off crc ) .v
-  over 22 + ee!h ( off ) .v
-  swap bno.data 22 0 do ( off bno.data ) .v
-    dup i + h@ 2 pick i + ee!h .v
-  2 +loop 2drop .v
+  bno.data dup 22 crc16-buf ( off bno.data crc )
+  swap 22 + h! ( off )
+  bno.data 24 rot ee!buf
   ;
 
 : bno-calib<ee ( off -- f ) \ restore calibration data from eeprom, returns whether successful
-  bno.data 24 0 do ( off bno.data )
-    over i + ee@h ( off bno.data h )
-    over i + h!
-  2 +loop ( off bno.data ) .v
-  22 crc16-buf ( off crc ) .v
-  swap 22 + ee@h = dup if bno-calib! then .v
+  bno.data swap over 24 rot ee@buf ( bno.data )
+  dup 22 crc16-buf ( bno.data crc1 )
+  swap 22 + h@ ( crc1 crc2 )
+  = dup if bno-calib! then
   ;
 
 : bno. ( -- ) \ fetch and print current data
   bno-calib?
-  case
-  0 of ." uncal q(" endof
-  1 of ." ~cal  q(" endof
-  2 of ." calib q(" endof
-  endcase
+  dup $ff =  if ." calib q(" else
+      $c0 >= if ." ~cal  q(" else
+                ." uncal q(" then then
   bno-data bno.data
   4 0 do dup h@ 16 lshift 16 arshift . 2+ loop \ print quaternions
   ." ) a("
   3 0 do dup h@ 16 lshift 16 arshift . 2+ loop \ print accel
   drop
   [char] ) emit
-  $34 reg@ .
+  $34 reg@ space . \ print temperature
   ;
 
+[IFDEF] BNO-TEST
 : bno-test \ print quaternion, accel, and system registers every second, save calibration when ready
   bno-init if ." Cannot find/init BNO055" exit then
   cr bno.info 0 page
-  BNO-EE bno-calib<ee ( calib-flag )
+  0 \ BNO-EE bno-calib<ee ( calib-flag )
   dup if ." Restored calib" cr then
   begin
     \ save calibration if we haven't and device is calibrated
     dup not if
       bno-calib? 2 = if
-	." Saving calib" cr
+        ." Saving calib" cr
         BNO-EE bno-calib>ee drop -1 \ save and set calib-flag
       then
     then
@@ -130,5 +123,4 @@ include ../stm32l0/eeprom.fs
     1000 ms
   key? until
   ;
-
-bno-test
+[THEN]

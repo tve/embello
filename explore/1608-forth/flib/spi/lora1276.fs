@@ -250,7 +250,7 @@ RF:MAXPKT buffer:  rf.buf
   swap 1+ c!
   ;
 
-: rf-rxpkt ( -- b ) \ extract packet and return length
+: rf-rxpkt ( -- b ) \ extract packet from fifo and return length
   RF:FIFORXCURR rf@ RF:FIFOPTR rf!                 \ set fifo pointer to start of pkt
   rf.buf RF:RXBYTES rf@ 66 min swap over rf-n@spi  \ pull packet out of fifo
   rf@status rf!clrirq                              \ get SNR, RSSI, etc, then clear IRQ
@@ -265,9 +265,12 @@ RF:MAXPKT buffer:  rf.buf
   then
   ;
 
-: rxend begin RF:IRQFLAGS rf@ $c0 and until ;
+: rxend begin RF:IRQFLAGS rf@ $c0 and 0= while 1 ms repeat ;
 
-: rf-ack? ( -- f )  \ turn on receiver and wait for ack, return length of ack pkt
+: rf-ack? ( -- len )  \ turn on receiver and wait for ack, return length of ack pkt
+  \ the wait duration is set by the RX timeout, which is initialized in symbol times, at 64
+  \ symbols that's from ~30ms at lora250.7 to ~2048ms at lora125.12. It should really be set
+  \ dynamically to the GW max response time (20ms?) plus ~10 symbols.
   rf!clrirq
   RF:M_RXSINGLE rf!mode
   rxend
@@ -313,7 +316,7 @@ hex
   0F00 h, \ FIFO RX base = 0
   1000 h, \ FIFO RX current = 0
   1112 h, \ mask valid header and FHSS change interrupts
-  1f40 h, \ rx-single timeout
+  1f40 h, \ rx-single timeout ($40=64 symbol times)
   2000 h, 2108 h, \ preamble of 8
   2342 h, \ max payload of 66 bytes
   23ff h,
@@ -356,7 +359,7 @@ decimal align
 
 0 variable p
 
-: rf-listen ( -- )  \ init RFM69 and report incoming packets until key press
+: rf-listen ( -- )  \ init radio and report incoming packets until key press
   RF:M_RXCONT rf!mode
   begin
     rf-recv ?dup if

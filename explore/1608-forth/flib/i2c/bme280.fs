@@ -5,8 +5,8 @@
 
 : bme-reset ( -- ) \ software reset of the bme280
   BME.ADDR i2c-addr
-  $E0 >i2c $B6 
-  0 i2c-xfer ;
+  $E0 >i2c $B6 >i2c
+  0 i2c-xfer drop ;
 
 : bme-init ( -- nak ) \ init the bme280 into continuous mode
   i2c-init bme-reset

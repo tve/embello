@@ -5,6 +5,7 @@ eraseflash
 compiletoflash
 ( board start: ) here dup hex.
 
+include ../flib/mecrisp/multi.fs
 include ../flib/mecrisp/calltrace.fs
 include ../flib/mecrisp/cond.fs
 include ../flib/mecrisp/hexdump.fs
@@ -15,8 +16,8 @@ include ../flib/stm32l0/adc.fs
 include ../flib/stm32l0/timer.fs
 include ../flib/stm32l0/pwm.fs
 include ../flib/stm32l0/spi.fs
-\ include ../flib/stm32l0/i2c.fs
-include ../flib/any/i2c-bb.fs
+include ../flib/stm32l0/i2c.fs
+\ include ../flib/any/i2c-bb.fs
 include ../flib/stm32l0/sleep.fs
 
 PA15 constant LED
@@ -24,7 +25,7 @@ PA15 constant LED
 : led-on LED ioc! ;
 : led-off LED ios! ;
 
-: hello ( -- ) flash-kb . ." KB <jz1> " hwid hex.
+: hello ( -- ) flash-kb . ." KB <jz1-tve> " hwid hex.
   $10000 compiletoflash here -  flashvar-here compiletoram here -
   ." ram/flash: " . . ." free " ;
 
