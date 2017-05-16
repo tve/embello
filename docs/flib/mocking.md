@@ -2,7 +2,7 @@
 
 [code]: any/mocking.fs (testing)
 * Code: <a href="https://github.com/jeelabs/embello/tree/master/explore/1608-forth/flib/any/mocking.fs">any/mocking.fs</a>
-* Needs: `testing.fs`
+* Needs: testing
 
 The mocking library enables simple mocking of dependencies and checking of expectations.
 In order to test a word that uses some dependency the idea is to override the
